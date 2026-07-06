@@ -1,0 +1,215 @@
+{
+  "run_id": "20260706T113739",
+  "generated_utc": "2026-07-06T18:21:29.760751Z",
+  "schema_version": "2.0",
+  "pipeline": {
+    "blocks": [
+      "Config",
+      "Ingest",
+      "Practice Rollup",
+      "NPPES Enrich",
+      "Score",
+      "Publish"
+    ]
+  },
+  "sources": {
+    "pdc_doctors_clinicians": {
+      "url": "https://data.cms.gov/provider-data/api/1/datastore/query/mj5m-pzi6/0",
+      "dataset_id": "mj5m-pzi6",
+      "method": "POST paginated",
+      "page_size": 500
+    },
+    "nppes_npi_registry": {
+      "url": "https://npiregistry.cms.hhs.gov/api/",
+      "version": "2.1",
+      "enumeration_type": "NPI-2"
+    }
+  },
+  "parameters": {
+    "specialties": [
+      "OTOLARYNGOLOGY",
+      "QUALIFIED SPEECH LANGUAGE PATHOLOGIST",
+      "PSYCHIATRY"
+    ],
+    "states": [
+      "AL",
+      "AK",
+      "AZ",
+      "AR",
+      "CA",
+      "CO",
+      "CT",
+      "DE",
+      "FL",
+      "GA",
+      "HI",
+      "ID",
+      "IL",
+      "IN",
+      "IA",
+      "KS",
+      "KY",
+      "LA",
+      "ME",
+      "MD",
+      "MA",
+      "MI",
+      "MN",
+      "MS",
+      "MO",
+      "MT",
+      "NE",
+      "NV",
+      "NH",
+      "NJ",
+      "NM",
+      "NY",
+      "NC",
+      "ND",
+      "OH",
+      "OK",
+      "OR",
+      "PA",
+      "RI",
+      "SC",
+      "SD",
+      "TN",
+      "TX",
+      "UT",
+      "VT",
+      "VA",
+      "WA",
+      "WV",
+      "WI",
+      "WY",
+      "DC"
+    ],
+    "specialty_services": [
+      "ABA",
+      "KETAMINE"
+    ]
+  },
+  "scoring_weights": {
+    "size_fit": 24,
+    "multi_site": 12,
+    "telehealth": 8,
+    "recency": 16,
+    "contactability": 20,
+    "specialty_service_fit": 20
+  },
+  "size_fit_target": [
+    5,
+    75
+  ],
+  "specialty_service_config": {
+    "ABA": {
+      "description": "Applied Behavior Analysis \u2013 autism/behavioral therapy",
+      "name_keywords": [
+        "ABA",
+        "APPLIED BEHAVIOR",
+        "BEHAVIORAL HEALTH",
+        "AUTISM",
+        "DEVELOPMENTAL",
+        "BEHAVIOR ANALYSIS"
+      ],
+      "spec_match": [
+        "QUALIFIED SPEECH LANGUAGE PATHOLOGIST"
+      ],
+      "pts": 20
+    },
+    "KETAMINE": {
+      "description": "Ketamine / infusion therapy \u2013 psychiatric specialty service",
+      "name_keywords": [
+        "KETAMINE",
+        "INFUSION",
+        "TMS",
+        "TRANSCRANIAL",
+        "TREATMENT RESISTANT",
+        "MOOD DISORDER",
+        "MIND"
+      ],
+      "spec_match": [
+        "PSYCHIATRY"
+      ],
+      "pts": 20
+    }
+  },
+  "row_counts": {
+    "clinicians_raw": 85586,
+    "practices_rolled_up": 17265,
+    "nppes_enriched": 300,
+    "npi_org_captured": 300,
+    "target_list": 17265,
+    "by_segment": {},
+    "by_state": {
+      "CA": 1728,
+      "NY": 1581,
+      "TX": 1256,
+      "FL": 1198,
+      "MI": 725,
+      "PA": 699,
+      "IL": 650,
+      "NJ": 643,
+      "MA": 595,
+      "OH": 520,
+      "GA": 479,
+      "NC": 470,
+      "MD": 397,
+      "VA": 362,
+      "AZ": 318,
+      "MO": 299,
+      "TN": 291,
+      "LA": 274,
+      "CO": 271,
+      "WI": 268,
+      "WA": 265,
+      "CT": 261,
+      "MN": 251,
+      "AL": 246,
+      "IN": 244,
+      "SC": 213,
+      "KY": 200,
+      "OR": 185,
+      "OK": 185,
+      "IA": 162,
+      "KS": 161,
+      "AR": 158,
+      "NV": 154,
+      "MS": 128,
+      "NE": 116,
+      "WV": 112,
+      "NM": 110,
+      "UT": 108,
+      "ID": 107,
+      "HI": 105,
+      "ME": 88,
+      "MT": 85,
+      "ND": 79,
+      "RI": 77,
+      "NH": 72,
+      "VT": 70,
+      "AK": 68,
+      "DE": 66,
+      "SD": 62,
+      "DC": 60,
+      "WY": 43
+    },
+    "by_specialty": {
+      "PSYCHIATRY": 11111,
+      "QUALIFIED SPEECH LANGUAGE PATHOLOGIST": 3388,
+      "OTOLARYNGOLOGY": 2766
+    },
+    "by_specialty_service": {
+      "\u2014": 17265
+    }
+  },
+  "dedupe_keys": [
+    "practice_key"
+  ],
+  "contactability_sub_weights": {
+    "telephone_number": 6,
+    "authorized_official": 6,
+    "domain": 4,
+    "fhir_endpoint": 4
+  }
+}
