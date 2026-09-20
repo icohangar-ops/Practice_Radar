@@ -1,5 +1,5 @@
 """
-06_publish.py – Export scored target list + pipeline manifest
+publish.py – Export scored target list + pipeline manifest
 ──────────────────────────────────────────────────────────────
 Writes target_list.csv and manifest.json to the working directory.
 """

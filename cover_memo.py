@@ -1,5 +1,5 @@
 """
-10_cover_memo.py – Cover Memo Excel sheet
+cover_memo.py – Cover Memo Excel sheet
 ──────────────────────────────────────────
 Injects a professionally formatted Cover Memo as the first sheet of
 target_list_npi.xlsx with pipeline metadata, KPI tiles, data-source

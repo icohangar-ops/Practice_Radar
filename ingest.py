@@ -1,5 +1,5 @@
 """
-02_ingest.py – CMS Doctors & Clinicians API ingest
+ingest.py – CMS Doctors & Clinicians API ingest
 ────────────────────────────────────────────────────
 Fetches clinician-level records from the CMS PDC API for every
 specialty × state combination and deduplicates into a single DataFrame.

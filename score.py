@@ -1,5 +1,5 @@
 """
-05_score.py – Practice scoring (0-100)
+score.py – Practice scoring (0-100)
 ──────────────────────────────────────
 Scores every practice on 6 weighted criteria:
   - size_fit        (24 pts) – practice size vs. sweet spot

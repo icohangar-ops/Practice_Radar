@@ -1,5 +1,5 @@
 """
-04_nppes_enrich.py – NPPES NPI-2 enrichment for top 400 practices
+nppes_enrich.py – NPPES NPI-2 enrichment for top 400 practices
 ──────────────────────────────────────────────────────────────────
 Queries the NPPES REST API to fetch org NPI (NPI-2), authorized officials,
 enumeration dates, websites, and FHIR endpoint data for the top 400
