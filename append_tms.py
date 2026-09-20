@@ -1,5 +1,5 @@
 """
-08_append_tms.py – Merge TMS rows into the combined target list
+append_tms.py – Merge TMS rows into the combined target list
 ────────────────────────────────────────────────────────────────
 Normalises and appends 830 TMS/behavioral-health records to the
 17,265 CMS Practice Radar rows, producing a unified 18,095-row list.

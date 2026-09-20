@@ -1,5 +1,5 @@
 """
-03_practice_rollup.py – Aggregate clinicians → practices
+practice_rollup.py – Aggregate clinicians → practices
 ─────────────────────────────────────────────────────────
 Groups clinician records by org_pac_id (groups) or address (solos)
 to create one row per practice with size, telehealth, and site metrics.

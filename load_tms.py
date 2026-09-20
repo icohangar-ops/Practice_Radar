@@ -1,5 +1,5 @@
 """
-07_load_tms.py – Load TMS market data from Excel
+load_tms.py – Load TMS market data from Excel
 ──────────────────────────────────────────────────
 Reads the manually curated TMS/behavioral-health Excel workbook and
 returns 5 categorised DataFrames: funded entities, society key persons,

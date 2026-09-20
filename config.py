@@ -1,5 +1,5 @@
 """
-01_config.py – Practice Radar pipeline configuration
+config.py – Practice Radar pipeline configuration
 ─────────────────────────────────────────────────────
 Central place for all tunable parameters: specialties, states, scoring
 weights, API endpoints, and schema versioning.

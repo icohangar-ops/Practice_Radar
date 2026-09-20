@@ -1,5 +1,5 @@
 """
-09_npi_append.py – NPI lookup and HubSpot export
+npi_append.py – NPI lookup and HubSpot export
 ──────────────────────────────────────────────────
 Appends NPI (National Provider Identifier) data to every row:
   - CMS rows  : inherit npi_org (NPI-2) from NPPES Enrich; npi_individual from npi_sample

@@ -21,25 +21,25 @@ Excel workbook — with NPI validated and dirty rows flagged for review.
 ## Pipeline architecture
 
 ```
-01_config.py          – Specialties, states, weights, API endpoints
+config.py          – Specialties, states, weights, API endpoints
      │
-02_ingest.py          – CMS PDC API → 85,586 clinician rows
+ingest.py          – CMS PDC API → 85,586 clinician rows
      │
-03_practice_rollup.py – Aggregate clinicians → 17,265 practices
+practice_rollup.py – Aggregate clinicians → 17,265 practices
      │
-04_nppes_enrich.py    – NPPES NPI-2 lookup for top 400 practices
+nppes_enrich.py    – NPPES NPI-2 lookup for top 400 practices
      │
-05_score.py           – Score 0–100 on 6 weighted criteria
+score.py           – Score 0–100 on 6 weighted criteria
      │
-06_publish.py         – Export target_list.csv + manifest.json
+publish.py         – Export target_list.csv + manifest.json
      │
-07_load_tms.py        – Load TMS Excel (830 rows, 5 categories)
+load_tms.py        – Load TMS Excel (830 rows, 5 categories)
      │
-08_append_tms.py      – Merge TMS into combined 18,095-row list
+append_tms.py      – Merge TMS into combined 18,095-row list
      │
-09_npi_append.py      – NPI lookup for TMS rows + HubSpot sheets
+npi_append.py      – NPI lookup for TMS rows + HubSpot sheets
      │
-10_cover_memo.py      – Styled Excel cover sheet
+cover_memo.py      – Styled Excel cover sheet
 ```
 
 ---
@@ -125,16 +125,16 @@ python run_pipeline.py
 
 Or run steps individually:
 ```bash
-python 01_config.py      # verify config
-python 02_ingest.py      # fetch CMS data  (~10 min, 153 API segments)
-python 03_practice_rollup.py
-python 04_nppes_enrich.py  # NPPES enrichment (~1 min)
-python 05_score.py
-python 06_publish.py
-python 07_load_tms.py
-python 08_append_tms.py
-python 09_npi_append.py    # TMS NPI lookup (~2 min for 830 rows)
-python 10_cover_memo.py    # optional styled cover sheet
+python config.py      # verify config
+python ingest.py      # fetch CMS data  (~10 min, 153 API segments)
+python practice_rollup.py
+python nppes_enrich.py  # NPPES enrichment (~1 min)
+python score.py
+python publish.py
+python load_tms.py
+python append_tms.py
+python npi_append.py    # TMS NPI lookup (~2 min for 830 rows)
+python cover_memo.py    # optional styled cover sheet
 ```
 
 ---
@@ -143,16 +143,16 @@ python 10_cover_memo.py    # optional styled cover sheet
 
 ```
 Practice_Radar/
-├── 01_config.py
-├── 02_ingest.py
-├── 03_practice_rollup.py
-├── 04_nppes_enrich.py
-├── 05_score.py
-├── 06_publish.py
-├── 07_load_tms.py
-├── 08_append_tms.py
-├── 09_npi_append.py
-├── 10_cover_memo.py
+├── config.py
+├── ingest.py
+├── practice_rollup.py
+├── nppes_enrich.py
+├── score.py
+├── publish.py
+├── load_tms.py
+├── append_tms.py
+├── npi_append.py
+├── cover_memo.py
 ├── run_pipeline.py
 ├── requirements.txt
 ├── .gitignore
