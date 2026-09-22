@@ -160,7 +160,28 @@ Practice_Radar/
 ```
 
 > Output files (`*.csv`, `*.xlsx`, `*.json`) are gitignored — they are
-> generated locally when you run the pipeline.
+> generated locally when you run the pipeline. Two committed exceptions
+> record the last published run as snapshots: `manifest.json` and
+> `target_list_npi.xlsx` are checked in deliberately.
+
+---
+
+## Evidence matrix
+
+Every capability claim in this file is backed by
+[`evidence/matrix.yaml`](evidence/matrix.yaml); CI refuses builds while any
+row is unverifiable. The verifier (`tools/verify_evidence_matrix.py`,
+vendored byte-identical from the `consensus-hardening-protocol` standard
+kit — verifier v1.0.0, vendored from kit commit `88067e4`) re-executes
+every row's evidence on each run and prints a
+`EVIDENCE MATRIX: VERIFIED (n/n)` verdict. A red `evidence-matrix` job
+means a claim in this file is not currently evidence-backed.
+
+Run it locally:
+
+```bash
+python3 tools/verify_evidence_matrix.py
+```
 
 ---
 

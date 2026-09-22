@@ -1,0 +1,177 @@
+# Practice Radar — evidence matrix (schema v1)
+#
+# Every capability claim stated in README.md is bound here to deterministic
+# evidence: a pytest node id, an executable stdlib-only script, a pinned
+# manifest field, or a hashed committed artifact. The vendored verifier
+# (tools/verify_evidence_matrix.py) re-executes every row on each CI run and
+# refuses — fail-closed — while any row is unverifiable.
+#
+# Vendored verifier: EVIDENCE_MATRIX_VERIFIER_VERSION=1.0.0, byte-identical to
+# the canonical kit at icohangar-ops/consensus-hardening-protocol,
+# vendored-from commit 88067e4 (kit PR #5, main).
+schema_version: 1
+repo: Practice_Radar
+claims:
+  - id: C001
+    claim: >-
+      One command runs the full pipeline: "python run_pipeline.py" executes
+      ingest, practice rollup, NPPES enrichment, scoring, publish, TMS load,
+      TMS append, and NPI append/HubSpot export in order.
+    source: "README.md#run"
+    evidence:
+      - type: test
+        ref: "tests/test_pipeline_structure.py::test_run_pipeline_imports_resolve"
+  - id: C002
+    claim: >-
+      The ten pipeline stages named in the README (config, ingest,
+      practice_rollup, nppes_enrich, score, publish, load_tms, append_tms,
+      npi_append, cover_memo) exist as standalone scripts and import cleanly.
+    source: "README.md#pipeline-architecture"
+    evidence:
+      - type: test
+        ref: "tests/test_pipeline_structure.py::test_stage_modules_import"
+      - type: test
+        ref: "tests/test_pipeline_structure.py::test_readme_file_structure_lists_real_files"
+  - id: C003
+    claim: >-
+      The published run (manifest run_id 20260706T113739) recorded 85,586 CMS
+      clinician rows rolled up into 17,265 practices.
+    source: "README.md#data-sources"
+    evidence:
+      - type: manifest_field
+        ref: "manifest.json:row_counts.clinicians_raw"
+        equals: 85586
+      - type: manifest_field
+        ref: "manifest.json:row_counts.practices_rolled_up"
+        equals: 17265
+  - id: C004
+    claim: >-
+      The pipeline merges in 830 manually curated TMS / behavioral-health
+      providers, producing a combined 18,095-row target list
+      (17,265 CMS practices + 830 TMS rows).
+    source: "README.md#what-this-does"
+    evidence:
+      - type: script
+        ref: "scripts/verify_target_list.py"
+        timeout_seconds: 120
+  - id: C005
+    claim: >-
+      Every practice is scored 0-100 on six weighted criteria whose weights
+      are size_fit 24, multi_site 12, telehealth 8, recency 16,
+      contactability 20, and specialty service 20 (summing to 100).
+    source: "README.md#scoring-methodology"
+    evidence:
+      - type: manifest_field
+        ref: "manifest.json:scoring_weights"
+        equals: { size_fit: 24, multi_site: 12, telehealth: 8, recency: 16, contactability: 20, specialty_service_fit: 20 }
+      - type: test
+        ref: "tests/test_scoring_config.py::test_weights_sum_to_100"
+  - id: C006
+    claim: >-
+      The pipeline targets the ENT (OTOLARYNGOLOGY), Qualified Speech Language
+      Pathologist, and Psychiatry specialties.
+    source: "README.md#what-this-does"
+    evidence:
+      - type: manifest_field
+        ref: "manifest.json:parameters.specialties"
+        equals: ["OTOLARYNGOLOGY", "QUALIFIED SPEECH LANGUAGE PATHOLOGIST", "PSYCHIATRY"]
+      - type: test
+        ref: "tests/test_scoring_config.py::test_specialties_match_config"
+  - id: C007
+    claim: >-
+      NPPES NPI-2 enrichment queries the top 400 practices by size, and the
+      published run captured org NPI-2 for 300 of them (75%).
+    source: "README.md#npi-methodology"
+    evidence:
+      - type: test
+        ref: "tests/test_nppes_surface.py::test_enrich_defaults_to_top_400"
+      - type: manifest_field
+        ref: "manifest.json:row_counts.nppes_enriched"
+        equals: 300
+      - type: manifest_field
+        ref: "manifest.json:row_counts.npi_org_captured"
+        equals: 300
+  - id: C008
+    claim: >-
+      Every row carries an npi_match_confidence of org_npi,
+      individual_npi_only, or unmatched, and unmatched rows are flagged for
+      review (npi_review_flag) so they are not bulk-imported to HubSpot.
+    source: "README.md#npi-methodology"
+    evidence:
+      - type: test
+        ref: "tests/test_npi_confidence.py::test_confidence_levels_and_review_flag"
+  - id: C009
+    claim: >-
+      The final workbook target_list_npi.xlsx contains the sheets HubSpot -
+      Ready (17,630 rows), HubSpot - NPI Review (465 rows), All Targets
+      (18,095 rows), Practice Radar (17,265 rows), TMS Appended (830 rows),
+      and five per-source tabs (CMS Practice Radar, TMS Funded Entity, TMS
+      Practice, Ketamine Focused, PE Behavioral Health).
+    source: "README.md#hubspot-output"
+    evidence:
+      - type: script
+        ref: "scripts/verify_target_list.py"
+        timeout_seconds: 120
+      - type: artifact_hash
+        ref: "target_list_npi.xlsx"
+        sha256: "693a5626c86cae838b2b8b22469abedf20c2e398650dc27eb3fd047b406dfd7b"
+  - id: C010
+    claim: >-
+      In the published workbook, CMS practices scored 4.8 to 71.8 with mean
+      28.5 (Practice Radar sheet, total_score column).
+    source: "README.md#scoring-methodology"
+    evidence:
+      - type: script
+        ref: "scripts/verify_target_list.py"
+        timeout_seconds: 120
+  - id: C011
+    claim: >-
+      TMS rows use a priority score on a 0-100 scale derived from source tier
+      and service breadth (append_tms.tms_priority over SOURCE_TIER and
+      SERVICE_BREADTH).
+    source: "README.md#scoring-methodology"
+    evidence:
+      - type: test
+        ref: "tests/test_tms_priority.py::test_tms_priority_scale_0_to_100"
+      - type: script
+        ref: "scripts/verify_target_list.py"
+        timeout_seconds: 120
+  - id: C012
+    claim: >-
+      CMS rows carry npi_sample individual NPI-1 identifiers with ~100%
+      coverage: all 17,265 CMS-origin rows in the published workbook have an
+      individual NPI-1 populated.
+    source: "README.md#npi-methodology"
+    evidence:
+      - type: script
+        ref: "scripts/verify_target_list.py"
+        timeout_seconds: 120
+  - id: C013
+    claim: >-
+      TMS rows are matched via live NPPES NPI-2 lookups by name, with 365 of
+      830 (44%) matched in the published workbook.
+    source: "README.md#npi-methodology"
+    evidence:
+      - type: script
+        ref: "scripts/verify_target_list.py"
+        timeout_seconds: 120
+  - id: C014
+    claim: >-
+      "pip install -r requirements.txt" installs the pipeline dependencies
+      from a well-formed, conflict-free requirements file (no duplicated or
+      superseded package pins).
+    source: "README.md#install"
+    evidence:
+      - type: script
+        ref: "scripts/verify_requirements.py"
+        timeout_seconds: 120
+  - id: C015
+    claim: >-
+      Output files (*.csv, *.xlsx, *.json) are gitignored and generated
+      locally when the pipeline runs; the committed exceptions are the two
+      checked-in snapshots of the last published run, manifest.json and
+      target_list_npi.xlsx.
+    source: "README.md#file-structure"
+    evidence:
+      - type: test
+        ref: "tests/test_repo_facts.py::test_gitignore_patterns_and_committed_snapshots"
