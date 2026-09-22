@@ -1,0 +1,31 @@
+name: Evidence matrix
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  evidence-matrix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # Fail-closed BEFORE any install step: the vendored verifier is
+      # stdlib-only and needs nothing but the checkout.
+      - name: Verify evidence matrix
+        run: python3 tools/verify_evidence_matrix.py
+
+      # Execute the matrix's test rows: install the documented dependencies
+      # (exercising the README install claim) and run the suite.
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Run test suite
+        run: |
+          python -m pip install --upgrade pip
+          pip install pytest
+          pip install -r requirements.txt
+          pytest -q
