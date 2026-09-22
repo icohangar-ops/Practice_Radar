@@ -108,7 +108,7 @@ The final workbook `target_list_npi.xlsx` contains:
 ## Setup & usage
 
 ### Requirements
-- Python 3.10+
+- Python 3.12+ (the pinned `numpy==2.5.2` requires it)
 - `tms_market_data.xlsx` placed in the working directory
 
 ### Install

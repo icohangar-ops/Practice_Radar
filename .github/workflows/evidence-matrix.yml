@@ -18,10 +18,10 @@ jobs:
 
       # Execute the matrix's test rows: install the documented dependencies
       # (exercising the README install claim) and run the suite.
-      - name: Set up Python 3.10
+      - name: Set up Python 3.12
         uses: actions/setup-python@v5
         with:
-          python-version: "3.10"
+          python-version: "3.12"
 
       - name: Run test suite
         run: |
