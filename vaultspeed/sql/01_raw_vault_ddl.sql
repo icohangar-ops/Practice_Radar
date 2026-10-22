@@ -96,9 +96,18 @@ CREATE TABLE IF NOT EXISTS practice_radar.pr_rdv.sat_provider_cms_pdc (
   load_dts        TIMESTAMP NOT NULL,
   hash_diff       STRING    NOT NULL,
   record_source   STRING    NOT NULL,
+  provider_first_name  STRING,
+  provider_last_name   STRING,
+  provider_middle_name STRING,
+  suff            STRING,
+  gndr            STRING,
+  cred            STRING,
+  med_sch         STRING,
   grd_yr          INT,
   pri_spec        STRING,
-  ind_enrlt_flg   STRING
+  sec_spec_all    STRING,
+  telehlth        STRING,   -- 'Y' or blank (live CMS field; replaces ind_enrlt_flg)
+  ind_assgn       STRING
 ) USING DELTA;
 
 CREATE TABLE IF NOT EXISTS practice_radar.pr_rdv.sat_provider_nppes (
@@ -119,9 +128,9 @@ CREATE TABLE IF NOT EXISTS practice_radar.pr_rdv.sat_practice_cms_pdc (
   load_dts        TIMESTAMP NOT NULL,
   hash_diff       STRING    NOT NULL,
   record_source   STRING    NOT NULL,
-  org_lgl_nm      STRING,
+  facility_name      STRING,
   num_org_mem     INT,
-  phn_numbr       STRING
+  telephone_number       STRING
 ) USING DELTA;
 
 CREATE TABLE IF NOT EXISTS practice_radar.pr_rdv.sat_practice_tms_funded (
@@ -178,9 +187,9 @@ CREATE TABLE IF NOT EXISTS practice_radar.pr_rdv.sat_location_cms_pdc (
   hash_diff       STRING    NOT NULL,
   record_source   STRING    NOT NULL,
   adr_ln_1        STRING,
-  cty_st_zip      STRING,
-  nppes_provider_state STRING,
-  nppes_provider_zip   STRING
+  citytown      STRING,
+  state STRING,
+  zip_code   STRING
 ) USING DELTA;
 
 CREATE TABLE IF NOT EXISTS practice_radar.pr_rdv.sat_organization_nppes (

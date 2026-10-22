@@ -81,7 +81,7 @@ LEFT JOIN dec USING (practice_hk);
 -- version counted npi x address rows, so a clinician with two addresses was counted twice.
 CREATE OR REPLACE VIEW practice_radar.pr_bv.bv_sat_practice_rollup AS
 WITH members AS (
-  SELECT lp.practice_hk, lp.provider_hk, sp.grd_yr, sp.ind_enrlt_flg, sp.pri_spec
+  SELECT lp.practice_hk, lp.provider_hk, sp.grd_yr, sp.telehlth, sp.pri_spec
   FROM practice_radar.pr_rdv.lnk_practice_provider lp
   LEFT JOIN practice_radar.pr_bv.cur_sat_provider_cms_pdc sp USING (provider_hk)
 ),
@@ -92,14 +92,14 @@ sites AS (
 agg AS (
   SELECT practice_hk,
          count(DISTINCT provider_hk)                          AS size,
-         avg(CASE WHEN ind_enrlt_flg = 'Y' THEN 1.0 ELSE 0 END) AS telehealth_share,
+         avg(CASE WHEN telehlth = 'Y' THEN 1.0 ELSE 0 END) AS telehealth_share,
          percentile(grd_yr, 0.5)                               AS median_grad_yr,
          mode(pri_spec)                                        AS pri_spec
   FROM members GROUP BY practice_hk
 ),
 named AS (
   SELECT a.*, coalesce(s.n_sites, 0) AS n_sites,
-         c.org_lgl_nm AS facility_name, c.phn_numbr AS telephone_number
+         c.facility_name AS facility_name, c.telephone_number AS telephone_number
   FROM agg a
   LEFT JOIN sites s USING (practice_hk)
   LEFT JOIN practice_radar.pr_bv.cur_sat_practice_cms_pdc c USING (practice_hk)
