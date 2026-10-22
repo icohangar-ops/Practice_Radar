@@ -1,4 +1,4 @@
--- Practice Radar: marts (Databricks SQL)
+-- Practice Radar: marts (DuckDB)
 -- Backs the data products practice_radar_hubspot_target_list and practice_radar_npi_review_queue.
 -- Column aliases keep the HubSpot import headers from npi_append.py unchanged.
 

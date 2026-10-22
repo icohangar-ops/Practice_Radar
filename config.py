@@ -26,7 +26,11 @@ SPECIALTY_SERVICES = {
 }
 
 PDC_DATASET = "mj5m-pzi6"
-PDC_URL     = f"https://data.cms.gov/resource/{PDC_DATASET}.json"
+# CMS retired the Socrata endpoint (data.cms.gov/resource/mj5m-pzi6.json returns HTTP 410).
+# The Provider Data Catalog now serves the dataset through the DKAN datastore API.
+PDC_URL     = f"https://data.cms.gov/provider-data/api/1/datastore/query/{PDC_DATASET}/0"
+PDC_TIMEOUT = 120   # seconds; the datastore API regularly takes 30-60 s per page
+PDC_RETRIES = 5     # attempts per page, exponential backoff (the API returns HTML 5xx pages under load)
 NPPES_URL   = "https://npiregistry.cms.hhs.gov/api/"
 PAGE_SIZE   = 500
 NPPES_LIMIT = 5

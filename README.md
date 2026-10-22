@@ -126,7 +126,7 @@ python run_pipeline.py
 Or run steps individually:
 ```bash
 python config.py      # verify config
-python ingest.py      # fetch CMS data  (~10 min, 153 API segments)
+python ingest.py      # fetch CMS data  (153 API segments; the CMS datastore API often takes 30-60 s per page)
 python practice_rollup.py
 python nppes_enrich.py  # NPPES enrichment (~1 min)
 python score.py
@@ -136,6 +136,20 @@ python append_tms.py
 python npi_append.py    # TMS NPI lookup (~2 min for 830 rows)
 python cover_memo.py    # optional styled cover sheet
 ```
+
+### Data Vault on DuckDB (VaultSpeed rebuild)
+The same sources can be loaded into a versioned Data Vault in a local DuckDB file, which keeps
+history, merges TMS duplicates of CMS practices and stores steward NPI decisions:
+```bash
+python ingest.py
+python vaultspeed/run_duckdb.py --clinicians clinicians_raw.csv --tms tms_market_data.xlsx --fetch-npi 400
+```
+See `vaultspeed/README.md` for the design and outputs.
+
+> **CMS API change (2026):** the Socrata endpoint `data.cms.gov/resource/mj5m-pzi6.json` now
+> returns HTTP 410. `ingest.py` uses the DKAN datastore API and the live column names
+> (`telehlth`, `facility_name`, `citytown`, `state`, `zip_code`, `telephone_number`), retries
+> overloaded pages, and fails instead of silently truncating a segment.
 
 ---
 

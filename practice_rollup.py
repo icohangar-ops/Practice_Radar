@@ -14,20 +14,20 @@ def rollup(clinicians):
     clinicians["practice_key"] = clinicians["org_pac_id"].where(
         clinicians["org_pac_id"].notna() & (clinicians["org_pac_id"] != ""),
         "SOLO_" + clinicians.get("adr_ln_1", "").fillna("") + "_" +
-        clinicians.get("cty_st_zip", "").fillna("")
+        clinicians.get("zip_code", "").fillna("")
     )
     grp = clinicians.groupby("practice_key")
     practices = grp.agg(
-        facility_name  = ("org_lgl_nm", lambda x: x.mode().iloc[0] if not x.mode().empty else x.iloc[0]),
+        facility_name  = ("facility_name", lambda x: x.mode().iloc[0] if not x.mode().empty else x.iloc[0]),
         pri_spec       = ("pri_spec",   lambda x: x.mode().iloc[0] if not x.mode().empty else x.iloc[0]),
-        state          = ("nppes_provider_state", lambda x: x.mode().iloc[0] if not x.mode().empty else x.iloc[0]),
-        citytown       = ("cty_st_zip", "first"),
-        zip_code       = ("nppes_provider_zip", "first"),
+        state          = ("state", lambda x: x.mode().iloc[0] if not x.mode().empty else x.iloc[0]),
+        citytown       = ("citytown", "first"),
+        zip_code       = ("zip_code", "first"),
         adr_ln_1       = ("adr_ln_1", "first"),
-        telephone_number = ("phn_numbr", "first"),
+        telephone_number = ("telephone_number", "first"),
         size           = ("npi", "count"),
         n_sites        = ("adr_ln_1", "nunique"),
-        telehealth_share = ("ind_enrlt_flg", lambda x: (x == "Y").mean()),
+        telehealth_share = ("telehlth", lambda x: (x == "Y").mean()),
         npi_sample     = ("npi", "first"),
         median_grad_yr = ("grd_yr", "median"),
         segment        = ("pri_spec", lambda x: x.mode().iloc[0] if not x.mode().empty else x.iloc[0]),
