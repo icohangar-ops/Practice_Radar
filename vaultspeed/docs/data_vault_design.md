@@ -1,11 +1,10 @@
 # Practice Radar on VaultSpeed: Data Vault design
 
-Target: Databricks (Delta), catalog/database `practice_radar`.
+Target: DuckDB, database file `practice_radar.duckdb` (attached as catalog `practice_radar`).
 Business model: `nppes_provider_registry` in the Enterprise Context Store (11 entities, 13 relations; Practice, Practice Score and NPI Match extended with Funding Amount USD, Score Source, Reviewer and Reviewed At).
 
-VaultSpeed generates the load code for the Raw Vault from the source metadata and the business model.
-The SQL in `../sql/` is the target design that the generated objects should match, and it can be used to
-review the shape of the vault. It is not a hand-coded replacement for the generated code.
+The source metadata, business model and mappings live in the Enterprise Context Store.
+The SQL in `../sql/` is DuckDB SQL and is the load code itself: `../run_duckdb.py` runs it end to end, and `tests/test_vault_duckdb.py` checks it in CI.
 
 ## 1. Layers
 
@@ -37,7 +36,7 @@ review the shape of the vault. It is not a hand-coded replacement for the genera
 | HUB_LOCATION | Location Key | SHA-256 of the standardised address (upper case, punctuation stripped, USPS abbreviations, ZIP5). This replaces the raw `SOLO_<adr>_<zip>` string. |
 | HUB_TAXONOMY | Taxonomy Code | NUCC code, filled from the NPPES bulk file / API `taxonomies[]` (phase 2) |
 
-All hash keys are `sha2(upper(trim(bk)), 256)`, and composite keys are joined with `||`. Every row carries `load_dts` and `record_source`.
+All hash keys are `sha256(upper(trim(bk)))`, and composite keys are joined with `||`. Every row carries `load_dts` and `record_source`.
 
 ## 4. Raw Vault (`pr_rdv`)
 

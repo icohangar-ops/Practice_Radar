@@ -1,4 +1,4 @@
--- Practice Radar: Business Vault (Databricks SQL)
+-- Practice Radar: Business Vault (DuckDB SQL)
 -- Ports practice_rollup.py, score.py, append_tms.py (priority) and npi_append.py (confidence)
 -- into versioned, set-based logic. All weights are read from the REF_* tables.
 
@@ -19,19 +19,19 @@ QUALIFY row_number() OVER (PARTITION BY organization_hk ORDER BY load_dts DESC) 
 
 CREATE OR REPLACE VIEW practice_radar.pr_bv.cur_ref_score_criterion AS
 SELECT * FROM practice_radar.pr_rdv.ref_score_criterion
-WHERE effective_from <= current_date()
+WHERE effective_from <= current_date
 QUALIFY row_number() OVER (PARTITION BY criterion_code ORDER BY effective_from DESC, load_dts DESC) = 1;
 
 -- ── BV_SAT_PRACTICE_NPI_MATCH (npi_append.py) ────────────────────────
 -- Best API candidate per practice (rank 1). A steward decision overrides it
 -- (see practice_radar.pr_bv.npi_review_decision).
 CREATE TABLE IF NOT EXISTS practice_radar.pr_bv.npi_review_decision (
-  practice_hk   STRING NOT NULL,
-  decided_npi   STRING,
-  review_status STRING NOT NULL,          -- open | confirmed | rejected
-  reviewer      STRING,
+  practice_hk   VARCHAR NOT NULL,
+  decided_npi   VARCHAR,
+  review_status VARCHAR NOT NULL,          -- open | confirmed | rejected
+  reviewer      VARCHAR,
   reviewed_at   TIMESTAMP
-) USING DELTA;
+);
 
 CREATE OR REPLACE VIEW practice_radar.pr_bv.bv_sat_practice_npi_match AS
 WITH api AS (
@@ -93,7 +93,7 @@ agg AS (
   SELECT practice_hk,
          count(DISTINCT provider_hk)                          AS size,
          avg(CASE WHEN telehlth = 'Y' THEN 1.0 ELSE 0 END) AS telehealth_share,
-         percentile(grd_yr, 0.5)                               AS median_grad_yr,
+         median(grd_yr)                               AS median_grad_yr,
          mode(pri_spec)                                        AS pri_spec
   FROM members GROUP BY practice_hk
 ),
@@ -113,7 +113,7 @@ svc AS (
   GROUP BY n.practice_hk
 )
 SELECT n.*,
-       year(current_date()) - n.median_grad_yr AS median_exp_yrs,
+       year(current_date) - n.median_grad_yr AS median_exp_yrs,
        n.n_sites = 1                           AS is_solo,
        n.n_sites > 1                           AS is_multi_site,
        coalesce(t.size_tier, 'system')         AS size_tier,
@@ -125,17 +125,17 @@ LEFT JOIN svc USING (practice_hk);
 -- ── BV_SAT_PRACTICE_SCORE (score.py) ─────────────────────────────────
 -- Materialise one row per practice per score run so runs can be compared.
 CREATE TABLE IF NOT EXISTS practice_radar.pr_bv.bv_sat_practice_score (
-  practice_hk          STRING    NOT NULL,
-  score_run_id         STRING    NOT NULL,
+  practice_hk          VARCHAR    NOT NULL,
+  score_run_id         VARCHAR    NOT NULL,
   scored_at            TIMESTAMP NOT NULL,
   criterion_version    DATE      NOT NULL,
   sc_size_fit          DOUBLE, sc_multi_site DOUBLE, sc_telehealth DOUBLE,
   sc_recency           DOUBLE, sc_contactability DOUBLE, sc_specialty_service DOUBLE,
   total_score          DOUBLE,
-  score_source         STRING
-) USING DELTA;
+  score_source         VARCHAR
+);
 
--- Run once per score run (pass :run_id from the orchestrator).
+-- Run once per score run (pass getvariable('run_id') from the orchestrator).
 INSERT INTO practice_radar.pr_bv.bv_sat_practice_score
 WITH w AS (
   SELECT max(CASE WHEN criterion_code='size_fit'          THEN weight_points END)   AS w_size,
@@ -172,7 +172,7 @@ s AS (
     CASE WHEN specialty_service <> '—' THEN w_svc ELSE 0 END                       AS sc_specialty_service
   FROM r CROSS JOIN w
 )
-SELECT practice_hk, :run_id, current_timestamp(), criterion_version,
+SELECT practice_hk, getvariable('run_id'), current_timestamp, criterion_version,
        sc_size_fit, sc_multi_site, sc_telehealth, sc_recency, sc_contactability, sc_specialty_service,
        round(sc_size_fit + sc_multi_site + sc_telehealth + sc_recency + sc_contactability + sc_specialty_service, 1),
        'cms_practice_radar'
@@ -204,10 +204,10 @@ SELECT t.practice_hk, t.tms_source, t.specialty_service,
        coalesce(ds.source_tier_points, 0) + coalesce(sb.points, 0)
        + CASE WHEN nullif(trim(t.website), '') IS NOT NULL THEN 10 ELSE 0 END
        + CASE WHEN nullif(trim(t.contact), '') IS NOT NULL THEN 10 ELSE 0 END
-       + CASE WHEN size(split(t.footprint, ',')) > 1 THEN 10 ELSE 0 END AS tms_priority_score,
+       + CASE WHEN len(string_split(t.footprint, ',')) > 1 THEN 10 ELSE 0 END AS tms_priority_score,
        -- '$12.5M' -> 12500000
-       try_cast(regexp_extract(replace(upper(t.amount), ',', ''), '([0-9]+(\\.[0-9]+)?)', 1) AS DOUBLE)
-       * CASE regexp_extract(replace(upper(t.amount), ',', ''), '[0-9.]+\\s*([MBK]?)', 1)
+       try_cast(regexp_extract(replace(upper(t.amount), ',', ''), '([0-9]+(\.[0-9]+)?)', 1) AS DOUBLE)
+       * CASE regexp_extract(replace(upper(t.amount), ',', ''), '[0-9.]+\s*([MBK]?)', 1)
            WHEN 'M' THEN 1e6 WHEN 'B' THEN 1e9 WHEN 'K' THEN 1e3 ELSE 1 END AS funding_amount_usd
 FROM tms t
 LEFT JOIN practice_radar.pr_rdv.ref_data_source     ds ON ds.source_code = t.tms_source

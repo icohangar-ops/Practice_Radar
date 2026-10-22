@@ -8,6 +8,11 @@ Scores every practice on 6 weighted criteria:
   - recency         (16 pts) – clinician graduation recency
   - contactability  (20 pts) – phone + website completeness
   - specialty_service (20 pts) – ABA / Ketamine signal detection
+
+Input columns follow the live CMS schema used by ingest.py / practice_rollup.py:
+facility_name, citytown, state, zip_code, telephone_number, and telehealth_share
+(share of clinicians with telehlth == "Y"; blank counts as no). The retired
+ind_enrlt_flg / org_lgl_nm / phn_numbr columns are no longer read.
 """
 import pandas as pd
 import numpy as np
@@ -26,7 +31,10 @@ def score(enriched_practices):
     # multi_site
     df["sc_multi_site"] = df["is_multi_site"].astype(float) * WEIGHTS["multi_site"]
 
-    # telehealth
+    # telehealth: live CMS flag is telehlth "Y"/blank (replaces ind_enrlt_flg)
+    if "telehealth_share" not in df.columns:
+        df["telehealth_share"] = (df["telehlth"].astype(str).str.strip().str.upper() == "Y").astype(float) \
+            if "telehlth" in df.columns else 0.0
     df["sc_telehealth"] = (df["telehealth_share"].fillna(0) * WEIGHTS["telehealth"]).clip(upper=WEIGHTS["telehealth"])
 
     # recency
@@ -37,6 +45,8 @@ def score(enriched_practices):
 
     # contactability
     has_phone   = (df["telephone_number"].notna() & (df["telephone_number"].astype(str).str.strip() != "")).astype(float)
+    if "website" not in df.columns:
+        df["website"] = np.nan
     has_website = (df["website"].notna() & (df["website"].astype(str).str.strip() != "")).astype(float)
     df["sc_contactability"] = (has_phone * 0.5 + has_website * 0.5) * WEIGHTS["contactability"]
 
