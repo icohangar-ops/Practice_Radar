@@ -10,7 +10,7 @@ QUALIFY row_number() OVER (PARTITION BY practice_hk ORDER BY scored_at DESC) = 1
 
 CREATE OR REPLACE VIEW practice_radar.pr_mart.practice_target_base AS
 WITH loc AS (   -- primary location = first linked address
-  SELECT lpl.practice_hk, sl.adr_ln_1, sl.cty_st_zip, sl.nppes_provider_state, sl.nppes_provider_zip
+  SELECT lpl.practice_hk, sl.adr_ln_1, sl.citytown, sl.state, sl.zip_code
   FROM practice_radar.pr_rdv.lnk_practice_location lpl
   JOIN practice_radar.pr_rdv.sat_location_cms_pdc sl USING (location_hk)
   QUALIFY row_number() OVER (PARTITION BY lpl.practice_hk ORDER BY sl.load_dts DESC, sl.adr_ln_1) = 1
@@ -27,9 +27,9 @@ SELECT
   coalesce(r.facility_name, tn.facility_name)                     AS facility_name,
   m.npi_org, m.npi_individual, m.npi_match_confidence, m.match_method, m.review_status,
   m.reviewer, m.reviewed_at,
-  loc.nppes_provider_state                                        AS state,
-  loc.cty_st_zip                                                  AS citytown,
-  loc.nppes_provider_zip                                          AS zip_code,
+  loc.state                                        AS state,
+  loc.citytown                                                  AS citytown,
+  loc.zip_code                                          AS zip_code,
   loc.adr_ln_1,
   r.telephone_number,
   coalesce(o.website, tn.website)                                 AS website,
@@ -40,7 +40,7 @@ SELECT
   s.sc_size_fit, s.sc_multi_site, s.sc_telehealth, s.sc_recency, s.sc_contactability, s.sc_specialty_service,
   coalesce(s.total_score, tp.tms_priority_score)                  AS unified_score,
   CASE WHEN s.total_score IS NOT NULL THEN 'cms_practice_radar' ELSE 'tms_priority' END AS score_source,
-  coalesce(tp.tms_source, 'practice_radar')                       AS tms_source,
+  coalesce(tp.tms_source, dup_tp.tms_source, 'practice_radar')    AS tms_source,
   tp.funding_amount_usd,
   s.score_run_id,
   o.endpoint_url IS NOT NULL                                      AS has_fhir_endpoint
@@ -54,7 +54,15 @@ LEFT JOIN (SELECT practice_hk, max(facility_name) AS facility_name, max(website)
            FROM tms_name GROUP BY practice_hk) tn
                                                                USING (practice_hk)
 LEFT JOIN practice_radar.pr_rdv.hub_organization ho ON ho.org_npi = m.npi_org
-LEFT JOIN practice_radar.pr_bv.cur_sat_organization_nppes o ON o.organization_hk = ho.organization_hk;
+LEFT JOIN practice_radar.pr_bv.cur_sat_organization_nppes o ON o.organization_hk = ho.organization_hk
+-- TMS duplicates of this (master) practice: carry their TMS source over
+LEFT JOIN (SELECT sal.master_practice_hk, max(t.tms_source) AS tms_source
+           FROM practice_radar.pr_bv.bv_sal_practice sal
+           JOIN practice_radar.pr_bv.bv_sat_practice_tms_priority t ON t.practice_hk = sal.dup_practice_hk
+           GROUP BY sal.master_practice_hk) dup_tp ON dup_tp.master_practice_hk = h.practice_hk
+-- drop practices that are a same-as duplicate of a CMS practice
+WHERE NOT EXISTS (SELECT 1 FROM practice_radar.pr_bv.bv_sal_practice sal
+                  WHERE sal.dup_practice_hk = h.practice_hk);
 
 -- ── HubSpot target list (NPI-confirmed, ranked) ──────────────────────
 CREATE OR REPLACE VIEW practice_radar.pr_mart.mart_hubspot_target_list AS

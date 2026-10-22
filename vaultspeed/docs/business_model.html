@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<title>Business Model: nppes_provider_registry</title>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family:'Segoe UI',system-ui,sans-serif; background:#0a0a1a; color:#e0e0e0; padding:24px; }
+h1 { color:#a78bfa; margin-bottom:6px; font-size:1.5rem; }
+h2 { color:#8b7cc8; margin:22px 0 10px; font-size:1.1rem; }
+h3 { font-size:.95rem; color:#e0e0e0; }
+.sub { color:#9a98b8; font-size:.85rem; }
+.stats-row { display:flex; gap:8px; margin:16px 0; flex-wrap:wrap; }
+.stat { background:#1a1a2e; padding:12px 20px; border-radius:8px; text-align:center; }
+.stat-value { font-size:1.8rem; font-weight:700; color:#a78bfa; }
+.stat-label { font-size:.75rem; color:#9a98b8; }
+.mermaid { background:#12122a; border-radius:8px; padding:20px; overflow-x:auto; }
+.entities-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(280px,1fr)); gap:12px; }
+.entity-card { border:1px solid; border-radius:8px; padding:12px; background:#10102a; }
+.entity-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; }
+.entity-type { font-size:.7rem; font-weight:700; text-transform:uppercase; }
+.def { font-size:.75rem; color:#9a98b8; margin-bottom:6px; }
+.entity-attrs { font-size:.8rem; }
+.attr { padding:2px 0; border-bottom:1px solid #1a1a2e; }
+.dt { color:#6b6990; font-size:.72rem; }
+.role { background:#a78bfa22; color:#a78bfa; padding:1px 6px; border-radius:3px; font-size:.68rem; }
+table { width:100%; border-collapse:collapse; font-size:.82rem; }
+th,td { text-align:left; padding:6px 8px; border-bottom:1px solid #1a1a2e; vertical-align:top; }
+th { color:#8b7cc8; }
+</style></head><body>
+<h1>Business Model: nppes_provider_registry</h1>
+<div class="sub">CMS NPPES / NPI registry provider model, rebuilt for a Data Vault on Databricks. &middot; status DRAFT &middot; generated from the Enterprise Context Store (model version 131)</div>
+<div class="stats-row">
+<div class="stat"><div class="stat-value">11</div><div class="stat-label">entities</div></div>
+<div class="stat"><div class="stat-value">93</div><div class="stat-label">attributes</div></div>
+<div class="stat"><div class="stat-value">13</div><div class="stat-label">relations</div></div>
+<div class="stat"><div class="stat-value">7</div><div class="stat-label">relation attributes</div></div>
+</div>
+<h2>Entity-relationship diagram</h2>
+<pre class="mermaid">
+erDiagram
+  Practice {
+    string Practice_Key PK
+    string Facility_Name
+    string Primary_Specialty
+    integer Practice_Size
+    integer Number_of_Sites
+    decimal Telehealth_Share
+    integer Median_Graduation_Year
+    integer Median_Experience_Years
+    string Size_Tier
+    boolean Is_Solo
+    boolean Is_Multi_Site
+    string Specialty_Service_Signal
+    decimal Practice_Age_Years
+    string Website
+    string Telephone_Number
+    decimal Funding_Amount_USD
+  }
+  Practice_Score {
+    string Score_Run_Id PK
+    decimal Total_Score
+    decimal Size_Fit_Score
+    decimal Multi_Site_Score
+    decimal Telehealth_Score
+    decimal Recency_Score
+    decimal Contactability_Score
+    decimal Specialty_Service_Score
+    timestamp Scored_At
+    string Schema_Version
+    string Score_Tier
+    string Score_Source
+  }
+  Score_Criterion {
+    string Criterion_Code PK
+    integer Weight_Points
+    string Description
+    integer Ideal_Range_Min
+    integer Ideal_Range_Max
+    date Effective_From
+  }
+  Data_Source {
+    string Source_Code PK
+    string Source_Name
+    string Source_Category
+    string Refresh_Cadence
+  }
+  NPI_Match {
+    string Match_Id PK
+    string NPI_Match_Confidence
+    string Match_Method
+    decimal Match_Score
+    string Matched_Name
+    timestamp Matched_At
+    string Review_Status
+    string Reviewer
+    timestamp Reviewed_At
+  }
+  Provider {
+    integer Graduation_Year
+    string Telehealth_Enrollment_Flag
+    string CMS_Primary_Specialty
+    string Authorized_Official_Name
+    string Website
+    boolean Has_FHIR_Endpoint
+    string FHIR_Endpoint_URL
+    string NPI PK
+    string Entity_Type_Code
+    string First_Name
+    string Last_Name
+    string Middle_Name
+    string Name_Prefix
+    string Name_Suffix
+    string Credential
+    string Gender_Code
+    string Sole_Proprietor_Flag
+    string Organization_Name__Legal_Business_Name_
+    date Enumeration_Date
+    date Last_Update_Date
+    string NPI_Deactivation_Reason_Code
+    date NPI_Deactivation_Date
+    date NPI_Reactivation_Date
+  }
+  Taxonomy {
+    string Taxonomy_Code PK
+    string Classification
+    string Specialization
+    string Grouping
+    string Definition
+  }
+  Location {
+    string Location_Key PK
+    string Address_Line_1
+    string Address_Line_2
+    string City
+    string State
+    string Postal_Code
+    string Country_Code
+    string Telephone_Number
+    string Fax_Number
+  }
+  Organization {
+    string Organization_Identifier PK
+    string Organization_Name
+    string Parent_Organization_LBN
+  }
+  Other_Identifier {
+    string Identifier_Value PK
+    string Identifier_Type_Code
+    string Identifier_State
+    string Identifier_Issuer
+  }
+  Specialty {
+    string Specialty_Code PK
+    string Specialty_Name
+  }
+  Practice }o--o{ Provider : &quot;employs&quot;
+  Practice }o--o{ Location : &quot;operates at&quot;
+  Practice ||--o{ Practice_Score : &quot;has score&quot;
+  Score_Criterion }o--o{ Practice_Score : &quot;contributes to&quot;
+  Practice ||--o{ NPI_Match : &quot;has NPI match&quot;
+  Provider ||--o{ NPI_Match : &quot;resolves to&quot;
+  Data_Source ||--o{ Practice : &quot;supplies&quot;
+  Data_Source ||--o{ NPI_Match : &quot;supplies&quot;
+  Provider }o--o{ Taxonomy : &quot;has taxonomy&quot;
+  Provider }o--o{ Location : &quot;practices at&quot;
+  Provider ||--o{ Other_Identifier : &quot;has other identifier&quot;
+  Organization ||--o{ Provider : &quot;is affiliated with&quot;
+  Specialty ||--o{ Taxonomy : &quot;groups&quot;
+</pre>
+<h2>Entities</h2>
+<div class="entities-grid"><div class="entity-card" style="border-color:#f59e0b55"><div class="entity-header"><h3>NPI Match</h3><span class="entity-type" style="color:#f59e0b">EVENT &middot; 9</span></div><div class="def">Result of matching a practice to an NPPES NPI-2 organization record.</div><div class="entity-attrs"><div class="attr">Match Id <span class="dt">string</span> <span class="role">NK</span></div><div class="attr">NPI Match Confidence <span class="dt">string</span> <span class="role">CL</span></div><div class="attr">Match Method <span class="dt">string</span> <span class="role">CL</span></div><div class="attr">Match Score <span class="dt">decimal</span> <span class="role">ME</span></div><div class="attr">Matched Name <span class="dt">string</span> <span class="role">DE</span></div><div class="attr">Matched At <span class="dt">timestamp</span> <span class="role">BD</span></div><div class="attr">Review Status <span class="dt">string</span> <span class="role">CL</span></div><div class="attr">Reviewer <span class="dt">string</span> <span class="role">DE</span></div><div class="attr">Reviewed At <span class="dt">timestamp</span> <span class="role">BD</span></div></div></div><div class="entity-card" style="border-color:#f59e0b55"><div class="entity-header"><h3>Practice Score</h3><span class="entity-type" style="color:#f59e0b">EVENT &middot; 12</span></div><div class="def">A 0-100 scoring run result for a practice across 6 weighted criteria.</div><div class="entity-attrs"><div class="attr">Score Run Id <span class="dt">string</span> <span class="role">NK</span></div><div class="attr">Total Score <span class="dt">decimal</span> <span class="role">ME</span></div><div class="attr">Size Fit Score <span class="dt">decimal</span> <span class="role">ME</span></div><div class="attr">Multi Site Score <span class="dt">decimal</span> <span class="role">ME</span></div><div class="attr">Telehealth Score <span class="dt">decimal</span> <span class="role">ME</span></div><div class="attr">Recency Score <span class="dt">decimal</span> <span class="role">ME</span></div><div class="attr">Contactability Score <span class="dt">decimal</span> <span class="role">ME</span></div><div class="attr">Specialty Service Score <span class="dt">decimal</span> <span class="role">ME</span></div><div class="attr">Scored At <span class="dt">timestamp</span> <span class="role">BD</span></div><div class="attr">Schema Version <span class="dt">string</span> <span class="role">DE</span></div><div class="attr">Score Tier <span class="dt">string</span> <span class="role">CL</span></div><div class="attr">Score Source <span class="dt">string</span> <span class="role">CL</span></div></div></div><div class="entity-card" style="border-color:#a78bfa55"><div class="entity-header"><h3>Location</h3><span class="entity-type" style="color:#a78bfa">IDENTITY &middot; 9</span></div><div class="def">A mailing or practice address, keyed by hash of the normalized address.</div><div class="entity-attrs"><div class="attr">Location Key <span class="dt">string</span> <span class="role">NK</span></div><div class="attr">Address Line 1 <span class="dt">string</span> <span class="role">DE</span></div><div class="attr">Address Line 2 <span class="dt">string</span> <span class="role">DE</span></div><div class="attr">City <span class="dt">string</span> <span class="role">DE</span></div><div class="attr">State <span class="dt">string</span> <span class="role">DE</span></div><div class="attr">Postal Code <span class="dt">string</span> <span class="role">DE</span></div><div class="attr">Country Code <span class="dt">string</span> <span class="role">DE</span></div><div class="attr">Telephone Number <span class="dt">string</span> <span class="role">DE</span></div><div class="attr">Fax Number <span class="dt">string</span> <span class="role">DE</span></div></div></div><div class="entity-card" style="border-color:#a78bfa55"><div class="entity-header"><h3>Organization</h3><span class="entity-type" style="color:#a78bfa">IDENTITY &middot; 3</span></div><div class="def">An organization (authorized official / parent organization) providers are affiliated with.</div><div class="entity-attrs"><div class="attr">Organization Identifier <span class="dt">string</span> <span class="role">NK</span></div><div class="attr">Organization Name <span class="dt">string</span> <span class="role">DE</span></div><div class="attr">Parent Organization LBN <span class="dt">string</span> <span class="role">DE</span></div></div></div><div class="entity-card" style="border-color:#a78bfa55"><div class="entity-header"><h3>Other Identifier</h3><span class="entity-type" style="color:#a78bfa">IDENTITY &middot; 4</span></div><div class="def">Other (non-NPI) provider identifiers such as Medicaid or state license IDs.</div><div class="entity-attrs"><div class="attr">Identifier Value <span class="dt">string</span> <span class="role">NK</span></div><div class="attr">Identifier Type Code <span class="dt">string</span> <span class="role">CL</span></div><div class="attr">Identifier State <span class="dt">string</span> <span class="role">CL</span></div><div class="attr">Identifier Issuer <span class="dt">string</span> <span class="role">CL</span></div></div></div><div class="entity-card" style="border-color:#a78bfa55"><div class="entity-header"><h3>Practice</h3><span class="entity-type" style="color:#a78bfa">IDENTITY &middot; 16</span></div><div class="def">A clinical practice (CMS org_pac_id rollup of clinicians, or a solo practitioner) evaluated as a commercial target.</div><div class="entity-attrs"><div class="attr">Practice Key <span class="dt">string</span> <span class="role">NK</span></div><div class="attr">Facility Name <span class="dt">string</span> <span class="role">DE</span></div><div class="attr">Primary Specialty <span class="dt">string</span> <span class="role">CL</span></div><div class="attr">Practice Size <span class="dt">integer</span> <span class="role">ME</span></div><div class="attr">Number of Sites <span class="dt">integer</span> <span class="role">ME</span></div><div class="attr">Telehealth Share <span class="dt">decimal</span> <span class="role">ME</span></div><div class="attr">Median Graduation Year <span class="dt">integer</span> <span class="role">ME</span></div><div class="attr">Median Experience Years <span class="dt">integer</span> <span class="role">DR</span></div><div class="attr">Size Tier <span class="dt">string</span> <span class="role">CL</span></div><div class="attr">Is Solo <span class="dt">boolean</span> <span class="role">DR</span></div><div class="attr">Is Multi Site <span class="dt">boolean</span> <span class="role">DR</span></div><div class="attr">Specialty Service Signal <span class="dt">string</span> <span class="role">CL</span></div><div class="attr">Practice Age Years <span class="dt">decimal</span> <span class="role">DR</span></div><div class="attr">Website <span class="dt">string</span> <span class="role">DE</span></div><div class="attr">Telephone Number <span class="dt">string</span> <span class="role">DE</span></div><div class="attr">Funding Amount USD <span class="dt">decimal</span> <span class="role">ME</span></div></div></div><div class="entity-card" style="border-color:#a78bfa55"><div class="entity-header"><h3>Provider</h3><span class="entity-type" style="color:#a78bfa">IDENTITY &middot; 23</span></div><div class="def">A healthcare provider (individual or organization) enumerated with an NPI in NPPES.</div><div class="entity-attrs"><div class="attr">Graduation Year <span class="dt">integer</span> <span class="role">DE</span></div><div class="attr">Telehealth Enrollment Flag <span class="dt">string</span> <span class="role">CL</span></div><div class="attr">CMS Primary Specialty <span class="dt">string</span> <span class="role">CL</span></div><div class="attr">Authorized Official Name <span class="dt">string</span> <span class="role">DE</span></div><div class="attr">Website <span class="dt">string</span> <span class="role">DE</span></div><div class="attr">Has FHIR Endpoint <span class="dt">boolean</span> <span class="role">CL</span></div><div class="attr">FHIR Endpoint URL <span class="dt">string</span> <span class="role">DE</span></div><div class="attr">NPI <span class="dt">string</span> <span class="role">NK</span></div><div class="attr">Entity Type Code <span class="dt">string</span> <span class="role">CL</span></div><div class="attr">First Name <span class="dt">string</span> <span class="role">DE</span></div><div class="attr">Last Name <span class="dt">string</span> <span class="role">DE</span></div><div class="attr">Middle Name <span class="dt">string</span> <span class="role">DE</span></div><div class="attr">Name Prefix <span class="dt">string</span> <span class="role">DE</span></div><div class="attr">Name Suffix <span class="dt">string</span> <span class="role">DE</span></div><div class="attr">Credential <span class="dt">string</span> <span class="role">DE</span></div><div class="attr">Gender Code <span class="dt">string</span> <span class="role">CL</span></div><div class="attr">Sole Proprietor Flag <span class="dt">string</span> <span class="role">CL</span></div><div class="attr">Organization Name (Legal Business Name) <span class="dt">string</span> <span class="role">DE</span></div><div class="attr">Enumeration Date <span class="dt">date</span> <span class="role">BD</span></div><div class="attr">Last Update Date <span class="dt">date</span> <span class="role">BD</span></div><div class="attr">NPI Deactivation Reason Code <span class="dt">string</span> <span class="role">CL</span></div><div class="attr">NPI Deactivation Date <span class="dt">date</span> <span class="role">BD</span></div><div class="attr">NPI Reactivation Date <span class="dt">date</span> <span class="role">BD</span></div></div></div><div class="entity-card" style="border-color:#34d39955"><div class="entity-header"><h3>Data Source</h3><span class="entity-type" style="color:#34d399">REFERENCE &middot; 4</span></div><div class="def">An upstream source feeding the Practice Radar pipeline (CMS, NPPES API, curated TMS market file).</div><div class="entity-attrs"><div class="attr">Source Code <span class="dt">string</span> <span class="role">NK</span></div><div class="attr">Source Name <span class="dt">string</span> <span class="role">DE</span></div><div class="attr">Source Category <span class="dt">string</span> <span class="role">CL</span></div><div class="attr">Refresh Cadence <span class="dt">string</span> <span class="role">DE</span></div></div></div><div class="entity-card" style="border-color:#34d39955"><div class="entity-header"><h3>Score Criterion</h3><span class="entity-type" style="color:#34d399">REFERENCE &middot; 6</span></div><div class="def">A weighted scoring criterion used in the Practice Radar 0-100 score.</div><div class="entity-attrs"><div class="attr">Criterion Code <span class="dt">string</span> <span class="role">NK</span></div><div class="attr">Weight Points <span class="dt">integer</span> <span class="role">DE</span></div><div class="attr">Description <span class="dt">string</span> <span class="role">DE</span></div><div class="attr">Ideal Range Min <span class="dt">integer</span> <span class="role">DE</span></div><div class="attr">Ideal Range Max <span class="dt">integer</span> <span class="role">DE</span></div><div class="attr">Effective From <span class="dt">date</span> <span class="role">BD</span></div></div></div><div class="entity-card" style="border-color:#34d39955"><div class="entity-header"><h3>Specialty</h3><span class="entity-type" style="color:#34d399">REFERENCE &middot; 2</span></div><div class="def">NUCC taxonomy-to-specialty rollup.</div><div class="entity-attrs"><div class="attr">Specialty Code <span class="dt">string</span> <span class="role">NK</span></div><div class="attr">Specialty Name <span class="dt">string</span> <span class="role">DE</span></div></div></div><div class="entity-card" style="border-color:#34d39955"><div class="entity-header"><h3>Taxonomy</h3><span class="entity-type" style="color:#34d399">REFERENCE &middot; 5</span></div><div class="def">NUCC healthcare provider taxonomy code.</div><div class="entity-attrs"><div class="attr">Taxonomy Code <span class="dt">string</span> <span class="role">NK</span></div><div class="attr">Classification <span class="dt">string</span> <span class="role">DE</span></div><div class="attr">Specialization <span class="dt">string</span> <span class="role">DE</span></div><div class="attr">Grouping <span class="dt">string</span> <span class="role">DE</span></div><div class="attr">Definition <span class="dt">string</span> <span class="role">DE</span></div></div></div></div>
+<h2>Relations</h2>
+<table><tr><th>Relation</th><th>Type</th><th>Participants</th><th>Attributes</th></tr><tr><td>Practice employs Provider</td><td>INTERSECTION</td><td>Practice (PEER, MANY), Provider (PEER, MANY)</td><td>Membership Source</td></tr><tr><td>Practice operates at Location</td><td>INTERSECTION</td><td>Practice (PEER, MANY), Location (PEER, MANY)</td><td></td></tr><tr><td>Practice has Practice Score</td><td>FK_ASSOCIATION</td><td>Practice (PARENT, ONE), Practice Score (CHILD, MANY)</td><td></td></tr><tr><td>Score Criterion weights Practice Score</td><td>INTERSECTION</td><td>Score Criterion (PEER, MANY), Practice Score (PEER, MANY)</td><td>Component Score</td></tr><tr><td>Practice has NPI Match</td><td>FK_ASSOCIATION</td><td>Practice (PARENT, ONE), NPI Match (CHILD, MANY)</td><td></td></tr><tr><td>NPI Match resolves to Provider</td><td>FK_ASSOCIATION</td><td>Provider (PARENT, ONE), NPI Match (CHILD, MANY)</td><td></td></tr><tr><td>Data Source supplies Practice</td><td>FK_ASSOCIATION</td><td>Data Source (PARENT, ONE), Practice (CHILD, MANY)</td><td></td></tr><tr><td>Data Source supplies NPI Match</td><td>FK_ASSOCIATION</td><td>Data Source (PARENT, ONE), NPI Match (CHILD, MANY)</td><td></td></tr><tr><td>Provider has Taxonomy</td><td>INTERSECTION</td><td>Provider (PEER, MANY), Taxonomy (PEER, MANY)</td><td>Taxonomy Slot Number, Primary Taxonomy Flag, License Number, License State</td></tr><tr><td>Provider practices at Location</td><td>INTERSECTION</td><td>Provider (PEER, MANY), Location (PEER, MANY)</td><td>Address Purpose</td></tr><tr><td>Provider has Other Identifier</td><td>FK_ASSOCIATION</td><td>Provider (PARENT, ONE), Other Identifier (CHILD, MANY)</td><td></td></tr><tr><td>Provider is affiliated with Organization</td><td>FK_ASSOCIATION</td><td>Organization (PARENT, ONE), Provider (CHILD, MANY)</td><td></td></tr><tr><td>Specialty groups Taxonomy</td><td>FK_ASSOCIATION</td><td>Specialty (PARENT, ONE), Taxonomy (CHILD, MANY)</td><td></td></tr></table>
+<script>mermaid.initialize({ startOnLoad:true, theme:'dark', er:{ useMaxWidth:false } });</script>
+</body></html>

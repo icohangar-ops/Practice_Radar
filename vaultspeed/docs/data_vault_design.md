@@ -1,7 +1,7 @@
 # Practice Radar on VaultSpeed: Data Vault design
 
 Target: Databricks (Delta), catalog/database `practice_radar`.
-Business model: `nppes_provider_registry` in the Enterprise Context Store (11 entities, 13 relations).
+Business model: `nppes_provider_registry` in the Enterprise Context Store (11 entities, 13 relations; Practice, Practice Score and NPI Match extended with Funding Amount USD, Score Source, Reviewer and Reviewed At).
 
 VaultSpeed generates the load code for the Raw Vault from the source metadata and the business model.
 The SQL in `../sql/` is the target design that the generated objects should match, and it can be used to
@@ -65,14 +65,14 @@ Satellites are split by source, because each source has its own change rate and 
 
 | Satellite | Parent | Attributes |
 |---|---|---|
-| SAT_PROVIDER_CMS_PDC | HUB_PROVIDER | grd_yr, pri_spec, ind_enrlt_flg |
+| SAT_PROVIDER_CMS_PDC | HUB_PROVIDER | names, gndr, cred, med_sch, grd_yr, pri_spec, sec_spec_all, telehlth, ind_assgn |
 | SAT_PROVIDER_NPPES | HUB_PROVIDER | names, credential, enumeration_date, website, endpoint_url |
-| SAT_PRACTICE_CMS_PDC | HUB_PRACTICE | org_lgl_nm, num_org_mem, phn_numbr |
+| SAT_PRACTICE_CMS_PDC | HUB_PRACTICE | facility_name, num_org_mem, telephone_number |
 | SAT_PRACTICE_TMS_FUNDED | HUB_PRACTICE | hq_or_primary_market, website, primary_contact_name, notes, amount |
 | SAT_PRACTICE_TMS_PRACTICE | HUB_PRACTICE | hq_or_primary_market, website, primary_contact, notes, states_or_footprint, ketamine_spravato_offered |
 | SAT_PRACTICE_TMS_KETAMINE | HUB_PRACTICE | citytown, country, website |
 | SAT_PRACTICE_TMS_PE | HUB_PRACTICE | citytown, website |
-| SAT_LOCATION_CMS_PDC | HUB_LOCATION | adr_ln_1, cty_st_zip, nppes_provider_state, nppes_provider_zip |
+| SAT_LOCATION_CMS_PDC | HUB_LOCATION | adr_ln_1, citytown, state, zip_code |
 | SAT_ORGANIZATION_NPPES | HUB_ORGANIZATION | organization_name, authorized official, enumeration_date, address_state, website, endpoint_url |
 | SAT_LNK_PRACTICE_NPI_LOOKUP | LNK_PRACTICE_NPI_LOOKUP | query_org_name, query_state, result_rank, enumeration_type |
 | SAT_LNK_PRACTICE_PROVIDER | LNK_PRACTICE_PROVIDER | membership_source |
@@ -124,13 +124,13 @@ The HubSpot column names stay the same as the current export (`Company Name`, `N
 |---|---|---|
 | clinician.npi | HUB_PROVIDER | Provider.NPI |
 | clinician.grd_yr | SAT_PROVIDER_CMS_PDC | Provider.Graduation Year |
-| clinician.ind_enrlt_flg | SAT_PROVIDER_CMS_PDC | Provider.Telehealth Enrollment Flag |
+| clinician.telehlth | SAT_PROVIDER_CMS_PDC | Provider.Telehealth Enrollment Flag |
 | clinician.pri_spec | SAT_PROVIDER_CMS_PDC | Provider.CMS Primary Specialty |
 | clinician.org_pac_id | HUB_PRACTICE | Practice.Practice Key |
-| clinician.org_lgl_nm | SAT_PRACTICE_CMS_PDC | Practice.Facility Name |
+| clinician.facility_name | SAT_PRACTICE_CMS_PDC | Practice.Facility Name |
 | clinician.num_org_mem | SAT_PRACTICE_CMS_PDC | Practice.Practice Size (reported) |
-| clinician.phn_numbr | SAT_PRACTICE_CMS_PDC | Practice.Telephone Number |
-| clinician.adr_ln_1, cty_st_zip, nppes_provider_state, nppes_provider_zip | HUB_LOCATION / SAT_LOCATION_CMS_PDC | Location.* |
+| clinician.telephone_number | SAT_PRACTICE_CMS_PDC | Practice.Telephone Number |
+| clinician.adr_ln_1, citytown, state, zip_code | HUB_LOCATION / SAT_LOCATION_CMS_PDC | Location.* |
 | npi_registry_result.number (NPI-2) | HUB_ORGANIZATION | Organization.Organization Identifier |
 | npi_registry_result.organization_name | SAT_ORGANIZATION_NPPES | Organization.Organization Name |
 | npi_registry_result.authorized_official_* | SAT_ORGANIZATION_NPPES | Provider.Authorized Official Name |
@@ -141,7 +141,19 @@ The HubSpot column names stay the same as the current export (`Company Name`, `N
 
 The authoritative attribute-level mapping is stored in the Enterprise Context Store as entity and attribute implementations.
 
-## 8. Known source caveats
-- `ind_enrlt_flg` is used as the telehealth signal in the current code. Check that it is the right CMS field (the dataset also publishes `telehlth`).
-- `cty_st_zip` is a composite field. Split it in staging before it feeds `Location.City`.
-- The pipeline uses older column names (`org_lgl_nm`, `phn_numbr`, `nppes_provider_state`). Confirm them against the live `mj5m-pzi6` schema before the first load.
+## 8. Source schema check (live `mj5m-pzi6`, verified 2026-10-22)
+The design uses the live CMS column names. The original `ingest.py` breaks against today's API:
+
+| Original pipeline | Live dataset | Impact on the original pipeline |
+|---|---|---|
+| `https://data.cms.gov/resource/mj5m-pzi6.json` | `https://data.cms.gov/provider-data/api/1/datastore/query/mj5m-pzi6/0` | Old endpoint returns **HTTP 410 Gone**, so ingest gets no rows |
+| `ind_enrlt_flg` (telehealth) | `telehlth` (`Y` or blank) | Telehealth share was always 0 |
+| `org_lgl_nm` | `facility_name` | Practice names were empty |
+| `cty_st_zip` | `citytown` (city only) | |
+| `nppes_provider_state` | `state` | The state filter in `fetch_segment` matched nothing |
+| `nppes_provider_zip` | `zip_code` (ZIP+4, 9 digits) | Staging takes the first 5 digits |
+| `phn_numbr` | `telephone_number` | Contactability lost its phone half |
+
+The live dataset also provides `provider_first_name`, `provider_last_name`, `provider_middle_name`, `suff`, `gndr`, `cred`, `med_sch`, `sec_spec_all`, `ind_pac_id`, `adr_ln_2`, `adrs_id`, `ind_assgn` and `grp_assgn`. These columns are now registered, and the identity fields are mapped to Provider.
+
+In a sample of 500 psychiatry rows, about 51% had `telehlth = 'Y'` and about 11% had no `org_pac_id` (solo clinicians).

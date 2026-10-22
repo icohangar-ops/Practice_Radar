@@ -1,6 +1,6 @@
 -- Practice Radar: staging key derivation (Databricks SQL)
 -- In VaultSpeed this logic goes into the source-object derived columns / BK expressions.
--- It replaces the string key 'SOLO_<adr_ln_1>_<cty_st_zip>' from practice_rollup.py.
+-- It replaces the string key 'SOLO_<adr_ln_1>_<citytown>' from practice_rollup.py.
 
 CREATE SCHEMA IF NOT EXISTS practice_radar.cms_pdc__stg;
 
@@ -11,7 +11,7 @@ WITH std AS (
     regexp_replace(regexp_replace(regexp_replace(regexp_replace(regexp_replace(
       upper(trim(coalesce(adr_ln_1, ''))), '[^A-Z0-9 ]', ''), '\\s+', ' '),
       '\\bSTREET\\b', 'ST'), '\\bAVENUE\\b', 'AVE'), '\\bSUITE\\b', 'STE')   AS std_adr_ln_1,
-    substr(regexp_replace(coalesce(nppes_provider_zip, ''), '[^0-9]', ''), 1, 5) AS std_zip5
+    substr(regexp_replace(coalesce(zip_code, ''), '[^0-9]', ''), 1, 5) AS std_zip5
   FROM practice_radar.cms_pdc.clinician c
 )
 SELECT
